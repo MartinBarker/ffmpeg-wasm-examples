@@ -10,6 +10,7 @@
     </style>
 </head>
 <body>
+    <!--
     <div>
         <h4>Ex1: Upload single video, extract frame (thumbnail), and display.</h4>
         <input id="file-input" type="file"/>
@@ -21,15 +22,21 @@
 
     <div>
         <h4>Ex2: Upload multiple files, extract frame (thumbnail) from first video file, and display.</h4>
-        <input id="file-input2" type="file" multiple/>
+        <input id="file-input2" type="file" name='recfile' multiple/>
         <button id="submit2">Create Thumbnail</button>
         <img id="thumbnail" />
     </div> 
-
+-->
     <div>
         <h4>Ex3: Upload multiple files [mp3+img} and render video</h4>
-        <input id="vid-input" type="file" multiple/>
+        <input id="vid-input" type="file" name='files' multiple/>
         <button id="renderVid">Render Vid</button>
+        <div>Video below:</div>
+        <video width="320" height="240" controls>
+            <source id='mp4source' src="" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+
     </div>
 
     <br><hr>

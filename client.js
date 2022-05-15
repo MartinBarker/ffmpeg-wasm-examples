@@ -15,6 +15,7 @@ const submitButton2 = document.querySelector('#submit2');
 const renderButton = document.querySelector('#renderVid');
 
 const thumbnailPreview = document.querySelector('#thumbnail');
+const mp4source = document.querySelector('#mp4source')
 const errorDiv = document.querySelector('#error');
 
 function showError(msg) {
@@ -41,7 +42,7 @@ async function renderVideo(files) {
     const payload = new FormData();
     for(var x = 0; x < files.length; x++){
         console.log(`renderVideo() file[${x}] = `, files[x])
-            payload.append('file', files[x]);
+            payload.append('files', files[x]);
     }
     console.log('renderVideo() payload=',payload)
 
@@ -55,7 +56,10 @@ async function renderVideo(files) {
         throw new Error('Creating thumbnail failed');
     }
 
-    return 'done';
+    const thumbnailBlob = await res.blob();
+    const thumbnail = await blobToDataURL(thumbnailBlob);
+
+    return thumbnail;
 }
 
 //ex1 generate thumbnail
@@ -63,7 +67,7 @@ async function createThumbnail(video) {
     console.log('createThumbnail()')
     console.log('createThumbnail() video=',video)
     const payload = new FormData();
-    payload.append('video', video);
+    payload.append('file', video);
     console.log('createThumbnail() payload=',payload)
 
     const res = await fetch(API_ENDPOINT_THUMBNAIL, {
@@ -86,8 +90,8 @@ async function createThumbnail2(files) {
     console.log('createThumbnail2()')
     console.log('createThumbnail2() files=',files)
     const payload = new FormData();
-    payload.append('video', files[0]);
-    payload.append('image', files[1]);
+    payload.append('recfile', files[0]);
+    payload.append('recfile', files[1]);
     console.log('createThumbnail2() payload=',payload)
 
     const res = await fetch(API_ENDPOINT_THUMBNAIL2, {
@@ -105,18 +109,20 @@ async function createThumbnail2(files) {
     return thumbnail;
 }
 
-//video button clicked
+//ex3 video button clicked
 renderButton.addEventListener('click', async () => {
-    console.log('renderButton clicked')
+    console.log('renderButton clicked!')
     const { files } = fileInputVideo;
     console.log('renderButton, files=',files)
     
     if (files.length > 0) {
         //const file = files[0];
         try {
+            console.log('call renderVideo()')
             const renderResult = await renderVideo(files);
-            console.log(renderResult)
-            thumbnailPreview.innerHTML = renderResult
+            console.log('renderVideo() finished. renderResult=',renderResult)
+            //mp4source.src = renderResult
+            mp4source.src = `data:video/webm;base64,${String(renderResult)}`;
             
         } catch(error) {
             showError(error);

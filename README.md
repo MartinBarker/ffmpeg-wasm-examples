@@ -10,4 +10,4 @@ npm start
 Now server is hosted at http://localhost:3000
 Open html file in browser
 
-Example files provided in `exampleMediaFiles.zip`
+Example files provided in `media/` folder

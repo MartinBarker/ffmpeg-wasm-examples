@@ -121,8 +121,8 @@ renderButton.addEventListener('click', async () => {
             console.log('call renderVideo()')
             const renderResult = await renderVideo(files);
             console.log('renderVideo() finished. renderResult=',renderResult)
-            //mp4source.src = renderResult
-            mp4source.src = `data:video/webm;base64,${String(renderResult)}`;
+            mp4source.src = renderResult
+            //mp4source.src = `data:video/webm;base64,${String(renderResult)}`;
             
         } catch(error) {
             showError(error);

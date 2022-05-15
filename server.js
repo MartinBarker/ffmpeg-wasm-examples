@@ -118,7 +118,7 @@ app.post('/render', upload.any(), async (req, res) => {
 
         const ffmpeg = await getFFmpeg();
 
-        const outputFileName = `cool-output-video.mkv`;
+        const outputFileName = `cool-output-video.mp4`;
         let outputData = null;
 
         var inputFileNames = []
@@ -131,14 +131,17 @@ app.post('/render', upload.any(), async (req, res) => {
             inputFileNames.push(inputFileName)
             ffmpeg.FS('writeFile', inputFileName, fileData);
         }
-
+/*
+-loop 1 -framerate 2 -i C:\ffmpeg wasm test\front.jpg -i C:\ffmpeg wasm test\small1.mp3 -i C:\ffmpeg wasm test\small2.mp3 -c:a libmp3lame -b:a 320k -filter_complex concat=n=2:v=0:a=1 -vcodec libx264 -bufsize 3M -filter:v scale=w=1920:h=1930,pad=ceil(iw/2)*2:ceil(ih/2)*2 -crf 18 -pix_fmt yuv420p -shortest -tune stillimage -t 13 C:\ffmpeg wasm test\concatVideo-327393.mp4
+*/
         await ffmpeg.run(
             '-loop', '1',
             '-framerate', '2',
             "-i", inputFileNames[0], 
             "-i", inputFileNames[1],
             "-i", inputFileNames[2],
-            "-c:a", "pcm_s32le", 
+            "-c:a", "libmp3lame", 
+            "-b:a", "320k", 
             "-filter_complex", "concat=n=2:v=0:a=1",
             "-vcodec", "libx264", 
             "-bufsize", "3M", 
@@ -147,7 +150,7 @@ app.post('/render', upload.any(), async (req, res) => {
             "-pix_fmt", "yuv420p", 
             "-shortest", "", 
             "-tune", "stillimage", 
-            "-t", "473", 
+            "-t", "13", 
             outputFileName
         );
 
@@ -155,13 +158,13 @@ app.post('/render', upload.any(), async (req, res) => {
         ffmpeg.FS('unlink', outputFileName);
 
         res.writeHead(200, {
-            'Content-Type': 'image/png',
+            'Content-Type': 'video/mp4',
             'Content-Disposition': `attachment;filename=${outputFileName}`,
             'Content-Length': outputData.length
         });
         //res.end(btoa(Buffer.from(outputData, 'binary')));
         //res.end(outputData)
-        res.end(Buffer.from(outputData, 'binary'));
+        res.end(btoa(Buffer.from(outputData, 'binary')));
 
     } catch (error) {
         console.error(error);

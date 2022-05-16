@@ -133,13 +133,18 @@ app.post('/render', upload.any(), async (req, res) => {
         }
 /*
 -loop 1 -framerate 2 -i C:\ffmpeg wasm test\front.jpg -i C:\ffmpeg wasm test\small1.mp3 -i C:\ffmpeg wasm test\small2.mp3 -c:a libmp3lame -b:a 320k -filter_complex concat=n=2:v=0:a=1 -vcodec libx264 -bufsize 3M -filter:v scale=w=1920:h=1930,pad=ceil(iw/2)*2:ceil(ih/2)*2 -crf 18 -pix_fmt yuv420p -shortest -tune stillimage -t 13 C:\ffmpeg wasm test\concatVideo-327393.mp4
-*/
+*/        
+        //create inputs
+        let ffmpegInputs=[]
+        for(var x = 0; x < inputFileNames.length; x++){
+            ffmpegInputs.push('-i')
+            ffmpegInputs.push(inputFileNames[x])
+            
+        }
         await ffmpeg.run(
             '-loop', '1',
             '-framerate', '2',
-            "-i", inputFileNames[0], 
-            "-i", inputFileNames[1],
-            "-i", inputFileNames[2],
+            ...ffmpegInputs,
             "-c:a", "libmp3lame", 
             "-b:a", "320k", 
             "-filter_complex", "concat=n=2:v=0:a=1",
@@ -150,9 +155,11 @@ app.post('/render', upload.any(), async (req, res) => {
             "-pix_fmt", "yuv420p", 
             "-shortest", "", 
             "-tune", "stillimage", 
-            "-t", "13", 
+            "-t", "1038", 
             outputFileName
         );
+
+
 
         outputData = ffmpeg.FS('readFile', outputFileName);
         ffmpeg.FS('unlink', outputFileName);
@@ -164,7 +171,7 @@ app.post('/render', upload.any(), async (req, res) => {
         });
         //res.end(btoa(Buffer.from(outputData, 'binary')));
         //res.end(outputData)
-        res.end(btoa(Buffer.from(outputData, 'binary')));
+        res.end(Buffer.from(outputData, 'binary'));
 
     } catch (error) {
         console.error(error);

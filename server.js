@@ -111,10 +111,10 @@ app.post('/thumbnail2', upload.any(), async (req, res) => {
 
 
 //ex3 render video
-app.post('/render', upload.any(), async (req, res) => {
+app.post('/render/:duration', upload.any(), async (req, res) => {
     try {
-        console.log('/render')
-        //console.log('/render req.files=',req.files)
+        console.log('/render req.params.duration=',req.params.duration)
+        console.log('/render req.files=',req.files)
 
         const ffmpeg = await getFFmpeg();
 
@@ -122,21 +122,29 @@ app.post('/render', upload.any(), async (req, res) => {
         let outputData = null;
 
         var inputFileNames = []
+        let audioFiles = []
+        let imageFiles = []
         for(var x = 0; x < req.files.length; x++){
             console.log(x)
             let file = req.files[x];
             let fileData = file.buffer;
 
+            if(file.mimetype.includes('image')){
+                audioFiles.push(file)
+            }else if(file.mimetype.includes('audio')){
+                imageFiles.push(file)
+            }
+
             var inputFileName = `input-file-${x}`;
             inputFileNames.push(inputFileName)
             ffmpeg.FS('writeFile', inputFileName, fileData);
         }
-/*
--loop 1 -framerate 2 -i C:\ffmpeg wasm test\front.jpg -i C:\ffmpeg wasm test\small1.mp3 -i C:\ffmpeg wasm test\small2.mp3 -c:a libmp3lame -b:a 320k -filter_complex concat=n=2:v=0:a=1 -vcodec libx264 -bufsize 3M -filter:v scale=w=1920:h=1930,pad=ceil(iw/2)*2:ceil(ih/2)*2 -crf 18 -pix_fmt yuv420p -shortest -tune stillimage -t 13 C:\ffmpeg wasm test\concatVideo-327393.mp4
-*/        
-        //create inputs
+
+        //create inputs [img needs to be first]
+        let files = imageFiles.concat(audioFiles)
+        console.log('img should be first:',files)
         let ffmpegInputs=[]
-        for(var x = 0; x < inputFileNames.length; x++){
+        for(var x = 0; x < files.length; x++){
             ffmpegInputs.push('-i')
             ffmpegInputs.push(inputFileNames[x])
             
@@ -147,7 +155,7 @@ app.post('/render', upload.any(), async (req, res) => {
             ...ffmpegInputs,
             "-c:a", "libmp3lame", 
             "-b:a", "320k", 
-            "-filter_complex", "concat=n=2:v=0:a=1",
+            "-filter_complex", `concat=n=${files.length-1}:v=0:a=1`,
             "-vcodec", "libx264", 
             "-bufsize", "3M", 
             "-filter:v", "scale=w=1920:h=1930,pad=ceil(iw/2)*2:ceil(ih/2)*2", 
@@ -155,14 +163,17 @@ app.post('/render', upload.any(), async (req, res) => {
             "-pix_fmt", "yuv420p", 
             "-shortest", "", 
             "-tune", "stillimage", 
-            "-t", "1038", 
+            //"-t", `${req.params.duration}`, 
             outputFileName
         );
 
 
 
         outputData = ffmpeg.FS('readFile', outputFileName);
+        console.log('outputData=',outputData)
         ffmpeg.FS('unlink', outputFileName);
+
+        console.log('outputData.length=',outputData.length)
 
         res.writeHead(200, {
             'Content-Type': 'video/mp4',
@@ -182,3 +193,4 @@ app.post('/render', upload.any(), async (req, res) => {
 app.listen(port, () => {
     console.log(`[info] ffmpeg-api listening at http://localhost:${port}`)
 });
+

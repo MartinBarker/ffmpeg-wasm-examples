@@ -6,15 +6,15 @@ const API_ENDPOINT_VIDEO = 'http://localhost:3000/render';
 
 
 
-const fileInput = document.querySelector('#file-input');
-const fileInput2 = document.querySelector('#file-input2');
+//const fileInput = document.querySelector('#file-input');
+//const fileInput2 = document.querySelector('#file-input2');
 const fileInputVideo = document.querySelector('#vid-input');
 
-const submitButton = document.querySelector('#submit');
-const submitButton2 = document.querySelector('#submit2');
+//const submitButton = document.querySelector('#submit');
+//const submitButton2 = document.querySelector('#submit2');
 const renderButton = document.querySelector('#renderVid');
 
-const thumbnailPreview = document.querySelector('#thumbnail');
+//const thumbnailPreview = document.querySelector('#thumbnail');
 const mp4source = document.querySelector('#mp4source')
 const errorDiv = document.querySelector('#error');
 
@@ -34,19 +34,18 @@ async function blobToDataURL(blob) {
 
 
 //render video
-async function renderVideo(files) {
-    console.log('renderVideo() ')
-    console.log('renderVideo() files=',files)
-    console.log('renderVideo() files.length=',files.length)
+async function renderVideo(files, totalDuration) {
+    console.log('renderVideo() totalDuration=',totalDuration)
+    console.log(`renderVideo() ${files.length} files=`,files)
 
     const payload = new FormData();
     for(var x = 0; x < files.length; x++){
-        console.log(`renderVideo() file[${x}] = `, files[x])
-            payload.append('files', files[x]);
+        //console.log(`renderVideo() file[${x}] = `, files[x])
+        payload.append('files', files[x]);
     }
     console.log('renderVideo() payload=',payload)
 
-    const res = await fetch(API_ENDPOINT_VIDEO, {
+    const res = await fetch( `${API_ENDPOINT_VIDEO}/${Math.ceil(totalDuration)}`, {
         method: 'POST',
         body: payload
     });
@@ -118,9 +117,18 @@ renderButton.addEventListener('click', async () => {
     if (files.length > 0) {
         //const file = files[0];
         try {
+            let totalDuration = 0
+            console.log('get durations')
+            for(var x = 0; x < files.length; x++){
+                let file = files[x]
+                let duration = await getLength(file)
+                console.log(`file ${x} duration = `, duration)
+                //console.log('totalDuration = ', totalDuration)
+                totalDuration=totalDuration+duration;
+            }
             console.log('call renderVideo()')
-            const renderResult = await renderVideo(files);
-            console.log('renderVideo() finished. renderResult=',renderResult)
+            const renderResult = await renderVideo(files, totalDuration);
+            //console.log('renderVideo() finished. renderResult=',renderResult)
             mp4source.src = renderResult
             //mp4source.src = `data:video/webm;base64,${String(renderResult)}`;
             
@@ -132,6 +140,7 @@ renderButton.addEventListener('click', async () => {
     }
 })
 
+/*
 //ex1 thumbnail button clicked
 submitButton.addEventListener('click', async () => {
     const { files } = fileInput;
@@ -166,3 +175,25 @@ submitButton2.addEventListener('click', async () => {
         showError('Please select a file');
     }
 });
+*/
+
+//get length of audio file
+async function getLength(file) {
+    return new Promise(async function (resolve, reject) {
+        //console.log('getLength file=', file)
+        try {
+            const mediainfo = await new Promise((res) => MediaInfo(null, res));
+            const getSize = () => file.size;
+            const readChunk = async (chunkSize, offset) => new Uint8Array(await file.slice(offset, offset + chunkSize).arrayBuffer());
+
+            const info = await mediainfo.analyzeData(getSize, readChunk);
+            // assumes we are only interested in audio duration
+            const audio_track = info.media.track.find((track) => track["@type"] === "Audio");
+            let duration = parseFloat(audio_track.Duration);
+            resolve(duration);
+        } catch (err) {
+            console.log('err getting file length = ', err);
+            resolve(0)
+        }
+    });
+}

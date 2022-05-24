@@ -1,4 +1,6 @@
 import express from 'express';
+import path from 'path';
+import {fileURLToPath} from 'url';
 import cors from 'cors';
 import multer from 'multer';
 import btoa from 'btoa'
@@ -17,6 +19,10 @@ async function getFFmpeg() {
 }
 
 const app = express();
+app.use(express.static('public'))
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const port = 3000;
 
 const upload = multer({
@@ -26,7 +32,10 @@ const upload = multer({
 
 app.use(cors());
 
-
+app.get('/', async function (req, res) {
+    
+  res.sendFile(__dirname + "/public/client.html");
+})
 
 //ex1 
 app.post('/thumbnail', upload.array('recfile[]'), async (req, res) => {
@@ -68,10 +77,10 @@ app.post('/thumbnail', upload.array('recfile[]'), async (req, res) => {
 
 //ex2
 app.post('/thumbnail2', upload.any(), async (req, res) => {
-    
+
     try {
         console.log('/thumbnail2')
-        console.log('/thumbnail2 req.files=',req.files)
+        console.log('/thumbnail2 req.files=', req.files)
 
         const videoData = req.file.buffer;
 
@@ -113,8 +122,8 @@ app.post('/thumbnail2', upload.any(), async (req, res) => {
 //ex3 render video
 app.post('/render/:duration', upload.any(), async (req, res) => {
     try {
-        console.log('/render req.params.duration=',req.params.duration)
-        console.log('/render req.files=',req.files)
+        console.log('/render req.params.duration=', req.params.duration)
+        console.log('/render req.files=', req.files)
 
         const ffmpeg = await getFFmpeg();
 
@@ -124,14 +133,14 @@ app.post('/render/:duration', upload.any(), async (req, res) => {
         var inputFileNames = []
         let audioFiles = []
         let imageFiles = []
-        for(var x = 0; x < req.files.length; x++){
+        for (var x = 0; x < req.files.length; x++) {
             console.log(x)
             let file = req.files[x];
             let fileData = file.buffer;
 
-            if(file.mimetype.includes('image')){
+            if (file.mimetype.includes('image')) {
                 audioFiles.push(file)
-            }else if(file.mimetype.includes('audio')){
+            } else if (file.mimetype.includes('audio')) {
                 imageFiles.push(file)
             }
 
@@ -142,27 +151,27 @@ app.post('/render/:duration', upload.any(), async (req, res) => {
 
         //create inputs [img needs to be first]
         let files = imageFiles.concat(audioFiles)
-        console.log('img should be first:',files)
-        let ffmpegInputs=[]
-        for(var x = 0; x < files.length; x++){
+        console.log('img should be first:', files)
+        let ffmpegInputs = []
+        for (var x = 0; x < files.length; x++) {
             ffmpegInputs.push('-i')
             ffmpegInputs.push(inputFileNames[x])
-            
+
         }
         await ffmpeg.run(
             '-loop', '1',
             '-framerate', '2',
             ...ffmpegInputs,
-            "-c:a", "libmp3lame", 
-            "-b:a", "320k", 
-            "-filter_complex", `concat=n=${files.length-1}:v=0:a=1`,
-            "-vcodec", "libx264", 
-            "-bufsize", "3M", 
-            "-filter:v", "scale=w=1920:h=1930,pad=ceil(iw/2)*2:ceil(ih/2)*2", 
-            "-crf", "18", 
-            "-pix_fmt", "yuv420p", 
-            "-shortest", "", 
-            "-tune", "stillimage", 
+            "-c:a", "libmp3lame",
+            "-b:a", "320k",
+            "-filter_complex", `concat=n=${files.length - 1}:v=0:a=1`,
+            "-vcodec", "libx264",
+            "-bufsize", "3M",
+            "-filter:v", "scale=w=1920:h=1930,pad=ceil(iw/2)*2:ceil(ih/2)*2",
+            "-crf", "18",
+            "-pix_fmt", "yuv420p",
+            "-shortest", "",
+            "-tune", "stillimage",
             //"-t", `${req.params.duration}`, 
             outputFileName
         );
@@ -170,10 +179,10 @@ app.post('/render/:duration', upload.any(), async (req, res) => {
 
 
         outputData = ffmpeg.FS('readFile', outputFileName);
-        console.log('outputData=',outputData)
+        console.log('outputData=', outputData)
         ffmpeg.FS('unlink', outputFileName);
 
-        console.log('outputData.length=',outputData.length)
+        console.log('outputData.length=', outputData.length)
 
         res.writeHead(200, {
             'Content-Type': 'video/mp4',

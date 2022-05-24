@@ -108,10 +108,31 @@ async function createThumbnail2(files) {
     return thumbnail;
 }
 
+async function moveImgFirstFile(files){
+    return new Promise(async function (resolve, reject) {
+        let imageFiles = []
+        let audioFiles = []
+        for(var x = 0; x < files.length; x++){
+            let fileType = files[x].type;
+            if(fileType.includes('audio/')){
+                audioFiles.push(files[x])
+            }else if(fileType.includes('image/')){
+                imageFiles.push(files[x])
+            }
+        }
+        console.log('moveImgFirstFile() img=',imageFiles,', audio=',audioFiles)
+        let combinedFiles = imageFiles;
+        combinedFiles=combinedFiles.concat(audioFiles)
+        console.log('combinedFiles=',combinedFiles)
+        resolve(combinedFiles)
+    })
+}
+
 //ex3 video button clicked
 renderButton.addEventListener('click', async () => {
     console.log('renderButton clicked!')
-    const { files } = fileInputVideo;
+    var { files } = fileInputVideo;
+    files = await moveImgFirstFile(files)
     console.log('renderButton, files=',files)
     
     if (files.length > 0) {

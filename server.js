@@ -199,7 +199,7 @@ app.post('/render/:duration', upload.any(), async (req, res) => {
     }
 });
 
-app.listen(port, () => {
+app.listen(process.env.PORT || port, () => {
     console.log(`[info] ffmpeg-api listening at http://localhost:${port}`)
 });
 

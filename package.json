@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --experimental-wasm-threads --experimental-wasm-bulk-memory server.js ",
+    "start":"node --experimental-wasm-threads server.js",
+    "start2": "node --experimental-wasm-threads --experimental-wasm-bulk-memory server.js ",
     "s":"nodemon -e js,html  --experimental-wasm-threads --experimental-wasm-bulk-memory server.js"
   },
   "type": "module",

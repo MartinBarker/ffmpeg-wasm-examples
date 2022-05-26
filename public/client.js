@@ -1,8 +1,9 @@
-const API_ENDPOINT_THUMBNAIL = 'http://localhost:3000/thumbnail';
+let port = 3000;
+const API_ENDPOINT_THUMBNAIL = `http://localhost:${port}/thumbnail`;
 
-const API_ENDPOINT_THUMBNAIL2 = 'http://localhost:3000/thumbnail2';
+const API_ENDPOINT_THUMBNAIL2 = `http://localhost:${port}/thumbnail2`;
 
-const API_ENDPOINT_VIDEO = 'http://localhost:3000/render';
+const API_ENDPOINT_VIDEO = `http://localhost:${port}/render`;
 
 
 
@@ -45,7 +46,8 @@ async function renderVideo(files, totalDuration) {
     }
     console.log('renderVideo() payload=',payload)
 
-    const res = await fetch( `${API_ENDPOINT_VIDEO}/${Math.ceil(totalDuration)}`, {
+    //const res = await fetch( `${API_ENDPOINT_VIDEO}/${Math.ceil(totalDuration)}`, {
+    const res = await fetch( `/render/${Math.ceil(totalDuration)}`, {
         method: 'POST',
         body: payload
     });

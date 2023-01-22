@@ -1,21 +1,23 @@
 let port = 3000;
 const API_ENDPOINT_THUMBNAIL = `http://localhost:${port}/thumbnail`;
-
 const API_ENDPOINT_THUMBNAIL2 = `http://localhost:${port}/thumbnail2`;
-
 const API_ENDPOINT_VIDEO = `http://localhost:${port}/render`;
 
+const filesInput = document.querySelector('#filesInput');
+const splitBySilenceButton = document.querySelector("#splitBySilence");
+splitBySilenceButton.addEventListener('click', async () => {
+    var { files } = filesInput;
+    console.log('splitBySilenceButton clicked, files=', files)
+    if (files.length > 0) {
+        try {
+            const renderResult = await splitAudioBySilence(files[0]);
+        } catch (error) {
+            showError(error);
+        }
+    }
+})
 
-
-//const fileInput = document.querySelector('#file-input');
-//const fileInput2 = document.querySelector('#file-input2');
-const fileInputVideo = document.querySelector('#vid-input');
-
-//const submitButton = document.querySelector('#submit');
-//const submitButton2 = document.querySelector('#submit2');
 const renderButton = document.querySelector('#renderVid');
-
-//const thumbnailPreview = document.querySelector('#thumbnail');
 const mp4source = document.querySelector('#mp4source')
 const errorDiv = document.querySelector('#error');
 
@@ -33,25 +35,45 @@ async function blobToDataURL(blob) {
     });
 }
 
+async function splitAudioBySilence(file){
+    console.log('splitAudioBySilence()')
 
-//render video
-async function renderVideo(files, totalDuration) {
-    console.log('renderVideo() totalDuration=',totalDuration)
-    console.log(`renderVideo() ${files.length} files=`,files)
-
+    //add files to payload
     const payload = new FormData();
-    for(var x = 0; x < files.length; x++){
-        //console.log(`renderVideo() file[${x}] = `, files[x])
+    for (var x = 0; x < files.length; x++) {
         payload.append('files', files[x]);
     }
-    console.log('renderVideo() payload=',payload)
 
-    //const res = await fetch( `${API_ENDPOINT_VIDEO}/${Math.ceil(totalDuration)}`, {
-    const res = await fetch( `/render/${Math.ceil(totalDuration)}`, {
+    //make request to splitBySilence server-side route 
+    const resp = await fetch(`/splitBySilence`, {
         method: 'POST',
         body: payload
     });
-    console.log('renderVideo() res=',res)
+    console.log('splitAudioBySilence() resp=', resp)
+
+    if (!resp.ok) {
+        throw new Error('splitAudioBySilence failed');
+    }
+    return 'done?';
+}
+
+async function renderVideo(files, totalDuration) {
+    console.log('renderVideo() totalDuration=', totalDuration)
+    console.log(`renderVideo() ${files.length} files=`, files)
+
+    const payload = new FormData();
+    for (var x = 0; x < files.length; x++) {
+        //console.log(`renderVideo() file[${x}] = `, files[x])
+        payload.append('files', files[x]);
+    }
+    console.log('renderVideo() payload=', payload)
+
+    //const res = await fetch( `${API_ENDPOINT_VIDEO}/${Math.ceil(totalDuration)}`, {
+    const res = await fetch(`/render/${Math.ceil(totalDuration)}`, {
+        method: 'POST',
+        body: payload
+    });
+    console.log('renderVideo() res=', res)
 
     if (!res.ok) {
         throw new Error('Creating thumbnail failed');
@@ -66,10 +88,10 @@ async function renderVideo(files, totalDuration) {
 //ex1 generate thumbnail
 async function createThumbnail(video) {
     console.log('createThumbnail()')
-    console.log('createThumbnail() video=',video)
+    console.log('createThumbnail() video=', video)
     const payload = new FormData();
     payload.append('file', video);
-    console.log('createThumbnail() payload=',payload)
+    console.log('createThumbnail() payload=', payload)
 
     const res = await fetch(API_ENDPOINT_THUMBNAIL, {
         method: 'POST',
@@ -89,11 +111,11 @@ async function createThumbnail(video) {
 //ex2 generate thumbnail
 async function createThumbnail2(files) {
     console.log('createThumbnail2()')
-    console.log('createThumbnail2() files=',files)
+    console.log('createThumbnail2() files=', files)
     const payload = new FormData();
     payload.append('recfile', files[0]);
     payload.append('recfile', files[1]);
-    console.log('createThumbnail2() payload=',payload)
+    console.log('createThumbnail2() payload=', payload)
 
     const res = await fetch(API_ENDPOINT_THUMBNAIL2, {
         method: 'POST',
@@ -110,22 +132,22 @@ async function createThumbnail2(files) {
     return thumbnail;
 }
 
-async function moveImgFirstFile(files){
+async function moveImgFirstFile(files) {
     return new Promise(async function (resolve, reject) {
         let imageFiles = []
         let audioFiles = []
-        for(var x = 0; x < files.length; x++){
+        for (var x = 0; x < files.length; x++) {
             let fileType = files[x].type;
-            if(fileType.includes('audio/')){
+            if (fileType.includes('audio/')) {
                 audioFiles.push(files[x])
-            }else if(fileType.includes('image/')){
+            } else if (fileType.includes('image/')) {
                 imageFiles.push(files[x])
             }
         }
-        console.log('moveImgFirstFile() img=',imageFiles,', audio=',audioFiles)
+        console.log('moveImgFirstFile() img=', imageFiles, ', audio=', audioFiles)
         let combinedFiles = imageFiles;
-        combinedFiles=combinedFiles.concat(audioFiles)
-        console.log('combinedFiles=',combinedFiles)
+        combinedFiles = combinedFiles.concat(audioFiles)
+        console.log('combinedFiles=', combinedFiles)
         resolve(combinedFiles)
     })
 }
@@ -135,70 +157,33 @@ renderButton.addEventListener('click', async () => {
     console.log('renderButton clicked!')
     var { files } = fileInputVideo;
     files = await moveImgFirstFile(files)
-    console.log('renderButton, files=',files)
-    
+    console.log('renderButton, files=', files)
+
     if (files.length > 0) {
         //const file = files[0];
         try {
             let totalDuration = 0
             console.log('get durations')
-            for(var x = 0; x < files.length; x++){
+            for (var x = 0; x < files.length; x++) {
                 let file = files[x]
                 let duration = await getLength(file)
                 console.log(`file ${x} duration = `, duration)
                 //console.log('totalDuration = ', totalDuration)
-                totalDuration=totalDuration+duration;
+                totalDuration = totalDuration + duration;
             }
             console.log('call renderVideo()')
             const renderResult = await renderVideo(files, totalDuration);
             //console.log('renderVideo() finished. renderResult=',renderResult)
             mp4source.src = renderResult
             //mp4source.src = `data:video/webm;base64,${String(renderResult)}`;
-            
-        } catch(error) {
+
+        } catch (error) {
             showError(error);
         }
     } else {
         showError('Please select a file');
     }
 })
-
-/*
-//ex1 thumbnail button clicked
-submitButton.addEventListener('click', async () => {
-    const { files } = fileInput;
-    console.log('submitButton, files=',files)
-    if (files.length > 0) {
-        const file = files[0];
-        try {
-            const thumbnail = await createThumbnail(file);
-            thumbnailPreview.src = thumbnail;
-        } catch(error) {
-            showError(error);
-        }
-    } else {
-        showError('Please select a file');
-    }
-});
-
-//ex2 thumbnail button clicked
-submitButton2.addEventListener('click', async () => {
-    const { files } = fileInput2;
-    console.log('submitButton2, files=',files)
-    if (files.length > 0) {
-        //const file = files[0];
-        try {
-            console.log('submitButton2, calling createThumbnail2')
-            const thumbnail = await createThumbnail2(files);
-            thumbnailPreview.src = thumbnail;
-        } catch(error) {
-            showError(error);
-        }
-    } else {
-        showError('Please select a file');
-    }
-});
-*/
 
 //get length of audio file
 async function getLength(file) {
